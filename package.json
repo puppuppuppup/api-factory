@@ -1,6 +1,6 @@
 {
   "name": "@whotioma/api-factory",
-  "version": "1.0.0",
+  "version": "0.1.0",
   "description": "axios-based singleton api factory",
   "main": "src/api-factory.ts",
   "scripts": {
