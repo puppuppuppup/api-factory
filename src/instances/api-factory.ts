@@ -22,56 +22,40 @@ export type ApiBaseTypes<BaseType> = ApiCustomTypes<{
     update: Partial<Omit<BaseType, 'id'>>;
 }>;
 
-export abstract class ApiInstance<Types extends ApiTypes> {
-    protected httpInstance: AxiosInstance;
-    protected endpoint: string;
+abstract class ApiInstance<Types extends ApiTypes> {
+    public _httpInstance: AxiosInstance;
+    public _endpoint: string;
 
     protected constructor(endpoint: string, options: HttpInstanceOptions) {
-        this.endpoint = endpoint;
-        this.httpInstance = HttpInstanceFactory.getInstance(options);
+        this._endpoint = endpoint;
+        this._httpInstance = HttpInstanceFactory.getInstance(options);
     }
 
     public async findOne(id: string | number, config?: AxiosRequestConfig): Promise<Types['single']> {
-        const res = await this.httpInstance.get<Types['single']>(`${this.endpoint}/${id}`, config);
+        const res = await this._httpInstance.get<Types['single']>(`${this._endpoint}/${id}`, config);
         return res.data;
     }
 
     public async findMany(config?: AxiosRequestConfig): Promise<Types['many']> {
-        const res = await this.httpInstance.get<Types['many']>(this.endpoint, config);
+        const res = await this._httpInstance.get<Types['many']>(this._endpoint, config);
         return res.data;
     }
 
     public async create(data: Types['create'], config?: AxiosRequestConfig): Promise<Types['single']> {
-        const res = await this.httpInstance.post<Types['single']>(this.endpoint, data, config);
+        const res = await this._httpInstance.post<Types['single']>(this._endpoint, data, config);
         return res.data;
     }
 
     public async update(id: string | number, data: Types['update'], config?: AxiosRequestConfig): Promise<Types['single']> {
-        const res = await this.httpInstance.put<Types['single']>(`${this.endpoint}/${id}`, data, config);
+        const res = await this._httpInstance.put<Types['single']>(`${this._endpoint}/${id}`, data, config);
         return res.data;
     }
 
     public async delete(id: string | number, config?: AxiosRequestConfig): Promise<Types['single']> {
-        const res = await this.httpInstance.delete<Types['single']>(`${this.endpoint}/${id}`, config);
+        const res = await this._httpInstance.delete<Types['single']>(`${this._endpoint}/${id}`, config);
         return res.data;
     }
 }
-
-export const getApi = <Types extends ApiTypes, ExtendedApi = ApiInstance<Types>>(
-    endpoint: string,
-    options: HttpInstanceOptions
-) => {
-    return class Api extends ApiInstance<Types> {
-        private static instance: ExtendedApi | null = null;
-
-        public static getInstance(): ExtendedApi {
-            if (!this.instance) {
-                this.instance = new this(endpoint, options) as ExtendedApi;
-            }
-            return this.instance;
-        }
-    };
-};
 
 export class ApiFactory {
     private options: HttpInstanceOptions;
@@ -79,19 +63,19 @@ export class ApiFactory {
     constructor(defaultOptions: HttpInstanceOptions) {
         this.options = defaultOptions;
     }
-
+    
     public getApi = <Types extends ApiTypes, ExtendedApi = ApiInstance<Types>>(
         endpoint: string,
         options: HttpInstanceOptions = this.options
     ) => {
         return class Api extends ApiInstance<Types> {
-            private static instance: ExtendedApi | null = null;
+            public static _instance: ExtendedApi | null = null;
     
             public static getInstance(): ExtendedApi {
-                if (!this.instance) {
-                    this.instance = new this(endpoint, options) as ExtendedApi;
+                if (!this._instance) {
+                    this._instance = new this(endpoint, options) as ExtendedApi;
                 }
-                return this.instance;
+                return this._instance;
             }
         };
     };

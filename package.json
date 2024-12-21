@@ -1,10 +1,11 @@
 {
-  "name": "@whotioma/api-factory",
-  "version": "0.1.0",
+  "name": "@puppup/api-factory",
+  "version": "1.0.0",
   "description": "axios-based singleton api factory",
-  "main": "src/api-factory.ts",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "build": "tsc"
   },
   "author": "puppuppuppup",
   "license": "MIT",

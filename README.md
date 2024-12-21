@@ -16,7 +16,7 @@
 
 ## Быстрый старт
 ```ts
-import { ApiFactory } from '@whotioma/api-factory'
+import { ApiFactory } from '@puppup/api-factory'
 
 type MyType = {
     id: number;
@@ -35,7 +35,7 @@ class MyApi extends apiFactory.getApi<ApiTypes>('endpoint') {}
 ```
 ## Инициализация
 ```ts
-import { ApiFactory } from '@whotioma/api-factory'
+import { ApiFactory } from '@puppup/api-factory'
 
 const apiFactory = new ApiFactory({
     baseUrl: 'base url',
@@ -79,7 +79,7 @@ class MyApi extends apiFactory.getApi('endpoint') {}
 
 ### Шаблонная типизация
 ```ts
-import { ApiBaseTypes, ApiFactory } from "@whotioma/api-factory";
+import { ApiBaseTypes, ApiFactory } from "@puppup/api-factory";
 
 type User = {
     id: number;
@@ -103,7 +103,7 @@ export type ApiBaseTypes<BaseType> = ApiCustomTypes<{
 ### Кастомная типизация
 Если необходимо переписать типы под определенные задачи, можно воспользоваться утилитой `ApiCustomTypes`, передав в неё необходимые типы
 ```ts
-import { ApiCustomTypes, ApiFactory } from "@whotioma/api-factory";
+import { ApiCustomTypes, ApiFactory } from "@puppup/api-factory";
 
 type User = {
     id: number;
@@ -149,7 +149,7 @@ class UsersModifiedApi extends apiFactory.getApi<ApiModifiedTypes>('users') {}
 Если нам необходимо добавить свои методы, не входящие в стандартный набор, мы можем расширить существующий api
 ```ts
 import { AxiosResponse } from "axios";
-import { ApiBaseTypes, ApiFactory } from "@whotioma/api-factory";
+import { ApiBaseTypes, ApiFactory } from "@puppup/api-factory";
 
 const apiFactory = new ApiFactory({
     baseUrl: 'base url',
