@@ -16,6 +16,7 @@
     "js-cookie": "^3.0.5"
   },
   "devDependencies": {
+    "@types/js-cookie": "^3.0.6",
     "@typescript-eslint/parser": "^8.18.1",
     "eslint": "^9.17.0",
     "eslint-plugin-prettier": "^5.2.1"
