@@ -1,5 +1,5 @@
 import { AxiosInstance, AxiosRequestConfig } from 'axios';
-import { HttpInstanceFactory, HttpInstanceOptions } from './http-instance.factory';
+import { HttpInstanceFactory, HttpConfig } from './http-instance.factory';
 
 type ApiTypes = {
     single: any;
@@ -26,9 +26,9 @@ abstract class ApiInstance<Types extends ApiTypes> {
     public _httpInstance: AxiosInstance;
     public _endpoint: string;
 
-    protected constructor(endpoint: string, options: HttpInstanceOptions) {
+    protected constructor(endpoint: string, config: HttpConfig) {
         this._endpoint = endpoint;
-        this._httpInstance = HttpInstanceFactory.getInstance(options);
+        this._httpInstance = HttpInstanceFactory.getInstance(config);
     }
 
     public async findOne(id: string | number, config?: AxiosRequestConfig): Promise<Types['single']> {
@@ -58,24 +58,24 @@ abstract class ApiInstance<Types extends ApiTypes> {
 }
 
 export class ApiFactory {
-    private options: HttpInstanceOptions;
+    private config: HttpConfig;
 
-    constructor(defaultOptions: HttpInstanceOptions) {
-        this.options = defaultOptions;
+    constructor(defaultOptions: HttpConfig) {
+        this.config = defaultOptions;
     }
     
     public getApi = <Types extends ApiTypes, ExtendedApi = ApiInstance<Types>>(
         endpoint: string,
-        options: HttpInstanceOptions = this.options
+        config: HttpConfig = this.config
     ) => {
         return class Api extends ApiInstance<Types> {
-            public static _instance: ExtendedApi | null = null;
+            static #instance: ExtendedApi | null = null;
     
             public static getInstance(): ExtendedApi {
-                if (!this._instance) {
-                    this._instance = new this(endpoint, options) as ExtendedApi;
+                if (!this.#instance) {
+                    this.#instance = new this(endpoint, config) as ExtendedApi;
                 }
-                return this._instance;
+                return this.#instance;
             }
         };
     };

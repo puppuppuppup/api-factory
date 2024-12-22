@@ -1,9 +1,7 @@
-// TODO: обновить процесс авторизации для httpInstance (interceptors)
-
 import axios, { AxiosInstance } from 'axios';
 import Cookies from 'js-cookie';
 
-export type HttpInstanceOptions = {
+export type HttpConfig = {
     baseUrl: string;
     tokenName?: string
 }
@@ -11,7 +9,7 @@ export type HttpInstanceOptions = {
 export class HttpInstanceFactory {
     private static httpInstance: AxiosInstance | null = null;
 
-    public static getInstance(options: HttpInstanceOptions) {
+    public static getInstance(options: HttpConfig) {
         if (!this.httpInstance) {
             this.httpInstance = axios.create({
                 baseURL: options.baseUrl,
