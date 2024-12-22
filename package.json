@@ -1,6 +1,6 @@
 {
   "name": "@puppup/api-factory",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "axios-based singleton api factory",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
