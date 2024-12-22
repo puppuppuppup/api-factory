@@ -1,2 +1,2 @@
 export { Api, ApiBaseTypes, ApiCustomTypes } from './instances/api-factory';
-export { HttpInstanceFactory } from './instances/http-instance.factory';
+export { HttpInstanceFactory, HttpConfig } from './instances/http-instance.factory';
