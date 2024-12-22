@@ -1,5 +1,5 @@
 import { AxiosInstance, AxiosRequestConfig } from 'axios';
-import { HttpInstanceFactory, HttpInstanceOptions } from './http-instance.factory';
+import { HttpInstanceFactory, HttpConfig } from './http-instance.factory';
 
 type ApiTypes = {
     single: any;
@@ -22,61 +22,97 @@ export type ApiBaseTypes<BaseType> = ApiCustomTypes<{
     update: Partial<Omit<BaseType, 'id'>>;
 }>;
 
-abstract class ApiInstance<Types extends ApiTypes> {
-    public _httpInstance: AxiosInstance;
-    public _endpoint: string;
+type ApiProps = { endpoint: string; httpConfig: HttpConfig };
 
-    protected constructor(endpoint: string, options: HttpInstanceOptions) {
-        this._endpoint = endpoint;
-        this._httpInstance = HttpInstanceFactory.getInstance(options);
+export class Api<Types extends ApiTypes = ApiTypes> {
+    protected httpInstance: AxiosInstance;
+    protected endpoint: string;
+
+    public constructor({ endpoint, httpConfig }: ApiProps) {
+        this.endpoint = endpoint;
+        this.httpInstance = HttpInstanceFactory.getInstance(httpConfig);
     }
 
-    public async findOne(id: string | number, config?: AxiosRequestConfig): Promise<Types['single']> {
-        const res = await this._httpInstance.get<Types['single']>(`${this._endpoint}/${id}`, config);
+    public async findOne(
+        id: string | number,
+        config?: AxiosRequestConfig,
+    ): Promise<Types['single']> {
+        const res = await this.httpInstance.get<Types['single']>(`${this.endpoint}/${id}`, config);
         return res.data;
     }
 
     public async findMany(config?: AxiosRequestConfig): Promise<Types['many']> {
-        const res = await this._httpInstance.get<Types['many']>(this._endpoint, config);
+        const res = await this.httpInstance.get<Types['many']>(this.endpoint, config);
         return res.data;
     }
 
-    public async create(data: Types['create'], config?: AxiosRequestConfig): Promise<Types['single']> {
-        const res = await this._httpInstance.post<Types['single']>(this._endpoint, data, config);
+    public async create(
+        data: Types['create'],
+        config?: AxiosRequestConfig,
+    ): Promise<Types['single']> {
+        const res = await this.httpInstance.post<Types['single']>(this.endpoint, data, config);
         return res.data;
     }
 
-    public async update(id: string | number, data: Types['update'], config?: AxiosRequestConfig): Promise<Types['single']> {
-        const res = await this._httpInstance.put<Types['single']>(`${this._endpoint}/${id}`, data, config);
+    public async update(
+        id: string | number,
+        data: Types['update'],
+        config?: AxiosRequestConfig,
+    ): Promise<Types['single']> {
+        const res = await this.httpInstance.put<Types['single']>(
+            `${this.endpoint}/${id}`,
+            data,
+            config,
+        );
         return res.data;
     }
 
-    public async delete(id: string | number, config?: AxiosRequestConfig): Promise<Types['single']> {
-        const res = await this._httpInstance.delete<Types['single']>(`${this._endpoint}/${id}`, config);
+    public async delete(
+        id: string | number,
+        config?: AxiosRequestConfig,
+    ): Promise<Types['single']> {
+        const res = await this.httpInstance.delete<Types['single']>(
+            `${this.endpoint}/${id}`,
+            config,
+        );
         return res.data;
     }
 }
 
-export class ApiFactory {
-    private options: HttpInstanceOptions;
+// class ApiConfig<Types extends ApiTypes> {
+//     constructor() {
 
-    constructor(defaultOptions: HttpInstanceOptions) {
-        this.options = defaultOptions;
-    }
-    
-    public getApi = <Types extends ApiTypes, ExtendedApi = ApiInstance<Types>>(
-        endpoint: string,
-        options: HttpInstanceOptions = this.options
-    ) => {
-        return class Api extends ApiInstance<Types> {
-            public static _instance: ExtendedApi | null = null;
-    
-            public static getInstance(): ExtendedApi {
-                if (!this._instance) {
-                    this._instance = new this(endpoint, options) as ExtendedApi;
-                }
-                return this._instance;
-            }
-        };
-    };
-}
+//     }
+
+// }
+
+// type ApiConfig = Record<
+//     string,
+//     {
+//         endpoint: string;
+//         options?: HttpInstanceOptions;
+//         instance?: new (config: { endpoint: string; options: HttpInstanceOptions }) => Api;
+//     }
+// >;
+// type ApiList<Config extends ApiConfig> = Record<keyof Config, Api>;
+
+// export class ApiFactory<Config extends ApiConfig> {
+//     public APIs: ApiList<Config> = {} as ApiList<Config>;
+
+//     constructor({ config, options }: { config: Config; options: HttpInstanceOptions }) {
+//         Object.keys(config).forEach(apiKey => {
+//             const { endpoint, instance, options: apiOptions } = config[apiKey];
+//             if (instance) {
+//                 this.APIs[apiKey as keyof Config] = new instance({
+//                     endpoint,
+//                     options: apiOptions || options,
+//                 }) as InstanceType<typeof instance>;
+//             } else {
+//                 this.APIs[apiKey as keyof Config] = new Api({
+//                     endpoint: endpoint,
+//                     options: apiOptions || options,
+//                 }) as Api;
+//             }
+//         });
+//     }
+// }
