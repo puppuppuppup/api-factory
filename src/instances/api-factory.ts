@@ -1,3 +1,4 @@
+// TODO: добавить возможность создавать кастомный инстанс
 import { AxiosInstance, AxiosRequestConfig } from 'axios';
 import { HttpInstanceFactory, HttpConfig } from './http-instance.factory';
 
@@ -22,61 +23,93 @@ export type ApiBaseTypes<BaseType> = ApiCustomTypes<{
     update: Partial<Omit<BaseType, 'id'>>;
 }>;
 
-abstract class ApiInstance<Types extends ApiTypes> {
-    public _httpInstance: AxiosInstance;
-    public _endpoint: string;
+type ApiProps = { endpoint: string; httpInstance: AxiosInstance };
 
-    protected constructor(endpoint: string, config: HttpConfig) {
-        this._endpoint = endpoint;
-        this._httpInstance = HttpInstanceFactory.getInstance(config);
+export class Api<Types extends ApiTypes = ApiTypes> {
+    protected httpInstance: AxiosInstance;
+    protected endpoint: string;
+
+    public constructor({ endpoint, httpInstance }: ApiProps) {
+        this.endpoint = endpoint;
+        this.httpInstance = httpInstance;
     }
 
-    public async findOne(id: string | number, config?: AxiosRequestConfig): Promise<Types['single']> {
-        const res = await this._httpInstance.get<Types['single']>(`${this._endpoint}/${id}`, config);
+    public async findOne(
+        id: string | number,
+        config?: AxiosRequestConfig,
+    ): Promise<Types['single']> {
+        const res = await this.httpInstance.get<Types['single']>(`${this.endpoint}/${id}`, config);
         return res.data;
     }
 
     public async findMany(config?: AxiosRequestConfig): Promise<Types['many']> {
-        const res = await this._httpInstance.get<Types['many']>(this._endpoint, config);
+        const res = await this.httpInstance.get<Types['many']>(this.endpoint, config);
         return res.data;
     }
 
-    public async create(data: Types['create'], config?: AxiosRequestConfig): Promise<Types['single']> {
-        const res = await this._httpInstance.post<Types['single']>(this._endpoint, data, config);
+    public async create(
+        data: Types['create'],
+        config?: AxiosRequestConfig,
+    ): Promise<Types['single']> {
+        const res = await this.httpInstance.post<Types['single']>(this.endpoint, data, config);
         return res.data;
     }
 
-    public async update(id: string | number, data: Types['update'], config?: AxiosRequestConfig): Promise<Types['single']> {
-        const res = await this._httpInstance.put<Types['single']>(`${this._endpoint}/${id}`, data, config);
+    public async update(
+        id: string | number,
+        data: Types['update'],
+        config?: AxiosRequestConfig,
+    ): Promise<Types['single']> {
+        const res = await this.httpInstance.put<Types['single']>(
+            `${this.endpoint}/${id}`,
+            data,
+            config,
+        );
         return res.data;
     }
 
-    public async delete(id: string | number, config?: AxiosRequestConfig): Promise<Types['single']> {
-        const res = await this._httpInstance.delete<Types['single']>(`${this._endpoint}/${id}`, config);
+    public async delete(
+        id: string | number,
+        config?: AxiosRequestConfig,
+    ): Promise<Types['single']> {
+        const res = await this.httpInstance.delete<Types['single']>(
+            `${this.endpoint}/${id}`,
+            config,
+        );
         return res.data;
     }
 }
 
-export class ApiFactory {
-    private config: HttpConfig;
+type ApiConfig<T extends typeof Api> = {
+    instanceClass: T;
+    endpoint: string;
+};
 
-    constructor(defaultOptions: HttpConfig) {
-        this.config = defaultOptions;
+type ApisConfig = Record<string, ApiConfig<any>>;
+
+type ApiList<Config extends ApisConfig> = {
+    [K in keyof Config]: InstanceType<Config[K]['instanceClass']>;
+};
+
+type ApiFactoryProps<Config extends ApisConfig> = {
+    apisConfig: Config;
+    httpConfig: HttpConfig;
+};
+
+export class ApiFactory<Config extends ApisConfig> {
+    public apis: ApiList<Config> = {} as ApiList<Config>;
+    private httpInstance: AxiosInstance;
+
+    constructor({ apisConfig, httpConfig }: ApiFactoryProps<Config>) {
+        this.httpInstance = HttpInstanceFactory.getInstance(httpConfig);
+
+        Object.keys(apisConfig).forEach(key => {
+            const { endpoint, instanceClass } = apisConfig[key];
+
+            this.apis[key as keyof Config] = new instanceClass({
+                endpoint,
+                httpInstance: this.httpInstance,
+            } satisfies ApiProps);
+        });
     }
-    
-    public getApi = <Types extends ApiTypes, ExtendedApi = ApiInstance<Types>>(
-        endpoint: string,
-        config: HttpConfig = this.config
-    ) => {
-        return class Api extends ApiInstance<Types> {
-            static #instance: ExtendedApi | null = null;
-    
-            public static getInstance(): ExtendedApi {
-                if (!this.#instance) {
-                    this.#instance = new this(endpoint, config) as ExtendedApi;
-                }
-                return this.#instance;
-            }
-        };
-    };
 }
