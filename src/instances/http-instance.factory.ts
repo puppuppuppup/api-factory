@@ -7,26 +7,22 @@ export type HttpConfig = {
 };
 
 export class HttpInstanceFactory {
-    private static httpInstance: AxiosInstance | null = null;
+    public static getInstance(httpConfig: HttpConfig): AxiosInstance {
+        const httpInstance = axios.create({
+            baseURL: httpConfig.baseUrl,
+        });
+        if (httpConfig.tokenName) {
+            httpInstance.interceptors.request.use(config => {
+                const token = Cookies.get(httpConfig.tokenName as string);
 
-    public static getInstance(httpConfig: HttpConfig) {
-        if (!this.httpInstance) {
-            this.httpInstance = axios.create({
-                baseURL: httpConfig.baseUrl,
+                if (token) {
+                    config.headers.Authorization = `Bearer ${token}`;
+                } else {
+                    delete config.headers.Authorization;
+                }
+                return config;
             });
-            if (httpConfig.tokenName) {
-                this.httpInstance.interceptors.request.use(config => {
-                    const token = Cookies.get(httpConfig.tokenName as string);
-
-                    if (token) {
-                        config.headers.Authorization = `Bearer ${token}`;
-                    } else {
-                        delete config.headers.Authorization;
-                    }
-                    return config;
-                });
-            }
         }
-        return this.httpInstance;
+        return httpInstance;
     }
 }

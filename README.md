@@ -16,41 +16,56 @@
 
 ## Быстрый старт
 ```ts
-import { ApiFactory } from '@puppup/api-factory'
+import { Api, ApiFactory, ApiBaseTypes, HttpConfig } from '@puppup/api-factory'
 
 type MyType = {
     id: number;
     name: string;
     email: string;
-}
+};
 
-const apiFactory = new ApiFactory({
-    baseUrl: 'base url',
-    tokenName: 'token name'
-})
+const HTTP_CONFIG: HttpConfig = {
+    baseUrl: 'base_url',
+    tokenName: 'token_name',
+};
 
-type ApiTypes = ApiBaseTypes<MyType>;
-
-class MyApi extends apiFactory.getApi<ApiTypes>('endpoint') {}
+// apis - хранилище всех указанных API
+const { apis } = new ApiFactory({
+    httpConfig: HTTP_CONFIG,
+    apisConfig: {
+        myApi: {
+            instance: Api<ApiBaseTypes<MyType>>,
+            endpoint: 'my-endpoint',
+        },
+    },
+});
 ```
 ## Инициализация
-```ts
-import { ApiFactory } from '@puppup/api-factory'
 
-const apiFactory = new ApiFactory({
-    baseUrl: 'base url',
-    tokenName: 'token name'
-})
-```
+### `httpConfig`
+Данное поле отвечает за настройку http-сущности, на базе которой будут строиться запросы API
+- `baseUrl`: общая часть ссылки для всех API в пределах данной `ApiFactory` (например, домен)
+- `tokenName`: название токена, которое используется в cookies в вашем веб-приложении. На его основании сущность будет устанавливать `Authorization`-хедер или удалять его.
 
-- `baseUrl` - устанавливает базовый url для всех api-сущностей, полученных через эту сущность `ApiFactory`
-- `tokenName`: имя токена из cookies, на которое может сослаться api-сущность как для автоматического добавления Authorization-хедера, так и для его удаления, в случае отсутствия токена в cookies
+### `apisConfig`
+
+В данное поле мы передаем объект с настройками нужных нам API. Ключи объекта будут использованы, как названия соответствующих API, В него входят:
+- `instance`: сущность, которая наследует класс `Api` и которая будет лежать в основе настройки методов и типов определенной API-сущности. Если отсутствует необходимость в типизации, можно передать `Api` без типов, но тогда для базовых методов будет применен `any`
+- `endpoint`: эндпоинт, на который будет настроен API относительно `baseUrl` из `httpConfig` вашей `ApiFactory`
 
 ## Создание api
 ```ts
-class MyApi extends apiFactory.getApi('endpoint') {}
+const { apis } = new ApiFactory({
+    httpConfig: HTTP_CONFIG,
+    apisConfig: {
+        myApi: {
+            instance: Api,
+            endpoint: 'endpoint',
+        },
+    },
+});
 ```
-Теперь мы имеем api-сущность, предоставляющую методы:
+Теперь мы имеем api-сущность `myApi`, предоставляющую методы:
 - `findOne`
 - `findMany`
 - `create`
@@ -59,8 +74,10 @@ class MyApi extends apiFactory.getApi('endpoint') {}
 
 Данные методы имеют предустановленный `endpoint`, который мы указали при создании сущности.
 
+Также все методы поддерживают передачу последним параметром `AxiosRequestConfig`
+
 ## Типизация
-Базовое использование `getApi` вернет нам сущность с методами, работающими с `any`, но мы можем протипизировать её.
+Базовое использование `Api` в поле `instance` вернет нам сущность с методами, работающими с `any`, но мы можем протипизировать её.
 
 Типизация разделена на:
 - `single`
@@ -75,11 +92,11 @@ class MyApi extends apiFactory.getApi('endpoint') {}
 - `update` - принимает `update` и возвращает `single`
 - `delete` - возвращает `single`
 
-Также все методы поддерживают передачу последним параметром `AxiosRequestConfig`
-
 ### Шаблонная типизация
 ```ts
-import { ApiBaseTypes, ApiFactory } from "@puppup/api-factory";
+import { ApiBaseTypes, ApiFactory, ... } from "@puppup/api-factory";
+
+...
 
 type User = {
     id: number;
@@ -87,9 +104,18 @@ type User = {
     email: string;
 }
 
+// Использование утилиты для шаблонной типизации
 type ApiTypes = ApiBaseTypes<User>;
 
-class UsersApi extends apiFactory.getApi<ApiTypes>('users') {}
+const { apis } = new ApiFactory({
+    httpConfig: HTTP_CONFIG,
+    apisConfig: {
+        usersApi: {
+            instance: Api<ApiTypes>,
+            endpoint: 'users',
+        },
+    },
+});
 ```
 При использовании шаблона `ApiBaseTypes`, мы получаем базовую типизацию следующего вида:
 ```ts
@@ -103,7 +129,9 @@ export type ApiBaseTypes<BaseType> = ApiCustomTypes<{
 ### Кастомная типизация
 Если необходимо переписать типы под определенные задачи, можно воспользоваться утилитой `ApiCustomTypes`, передав в неё необходимые типы
 ```ts
-import { ApiCustomTypes, ApiFactory } from "@puppup/api-factory";
+import { ApiCustomTypes, ApiFactory, ... } from "@puppup/api-factory";
+
+...
 
 type User = {
     id: number;
@@ -111,6 +139,7 @@ type User = {
     email: string;
 }
 
+// Использование утилиты для кастомной типизации
 type ApiTypes = ApiCustomTypes<{
     single: Pick<User, 'id'>,
     many: ApiTypes['single'][],
@@ -118,16 +147,21 @@ type ApiTypes = ApiCustomTypes<{
     update: Partial<User>,
 }>;
 
-class UsersApi extends apiFactory.getApi<ApiTypes>('users') {}
+const { apis } = new ApiFactory({
+    httpConfig: HTTP_CONFIG,
+    apisConfig: {
+        usersApi: {
+            instance: Api<ApiTypes>,
+            endpoint: 'users',
+        },
+    },
+});
 ```
-Также мы можем воспользоваться `ApiCustomTypes` на базе уже существующего типа для api, доработав его
+Также мы можем воспользоваться `ApiCustomTypes` на базе существующего типа для API, доработав его
 ```ts
-import { ApiBaseTypes, ApiCustomTypes, ApiFactory } from "./src";
+import { ApiBaseTypes, ApiCustomTypes, ApiFactory, ... } from "@puppup/api-factory";
 
-const apiFactory = new ApiFactory({
-    baseUrl: 'base url',
-    tokenName: 'token name'
-})
+...
 
 type User = {
     id: number;
@@ -137,13 +171,25 @@ type User = {
 
 // Базовые типы
 type ApiTypes = ApiBaseTypes<User>;
-class UsersApi extends apiFactory.getApi<ApiTypes>('users') {}
 
 // Модифицированные типы
 type ApiModifiedTypes = ApiCustomTypes<ApiTypes, {
     create: Pick<User, 'id'>;
 }>
-class UsersModifiedApi extends apiFactory.getApi<ApiModifiedTypes>('users') {}
+
+const { apis } = new ApiFactory({
+    httpConfig: HTTP_CONFIG,
+    apisConfig: {
+        usersApi: {
+            instance: Api<ApiTypes>,
+            endpoint: 'users',
+        },
+        usersModifiedApi: {
+            instance: Api<ApiModifiedTypes>,
+            endpoint: 'users',
+        },
+    },
+});
 ```
 ## Расширение api
 Если нам необходимо добавить свои методы, не входящие в стандартный набор, мы можем расширить существующий api
@@ -151,36 +197,28 @@ class UsersModifiedApi extends apiFactory.getApi<ApiModifiedTypes>('users') {}
 import { AxiosResponse } from "axios";
 import { ApiBaseTypes, ApiFactory } from "@puppup/api-factory";
 
-const apiFactory = new ApiFactory({
-    baseUrl: 'base url',
-    tokenName: 'token name'
-})
-
 type User = {
     id: number;
     name: string;
     email: string;
 }
 
-type ApiTypes = ApiBaseTypes<User>;
-
-type EmailData = {
-    data: any
-}
-
-class UsersExtendedApi extends apiFactory.getApi<ApiTypes, UsersExtendedApi>('users') {
-    public logEndpoint() {
-        console.log(this.endpoint);
-    }
-
-    public sendEmail(data: any) {
-        this.httpInstance.post<any, AxiosResponse, EmailData >('/email', {
-            data: data,
-        })
+class UsersExtendedApi extends Api<ApiBaseTypes<User>> {
+    getMe() {
+        return this.httpInstance.get(this.endpoint + '/me');
     }
 }
+
+const { apis } = new ApiFactory({
+    httpConfig: HTTP_CONFIG,
+    apisConfig: {
+        usersExtendedApi: {
+            instance: UsersExtendedApi,
+            endpoint: 'users',
+        },
+    },
+});
+
+apis.usersExtendedApi.getMe();
 ```
-Что было сделано:
-1. Написаны новые методы
-2. В дженерики `getApi` вторым параметром был прокинут класс расширяемого api для корректной типизации
 

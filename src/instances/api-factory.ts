@@ -22,15 +22,15 @@ export type ApiBaseTypes<BaseType> = ApiCustomTypes<{
     update: Partial<Omit<BaseType, 'id'>>;
 }>;
 
-type ApiProps = { endpoint: string; httpConfig: HttpConfig };
+type ApiProps = { endpoint: string; httpInstance: AxiosInstance };
 
 export class Api<Types extends ApiTypes = ApiTypes> {
     protected httpInstance: AxiosInstance;
     protected endpoint: string;
 
-    public constructor({ endpoint, httpConfig }: ApiProps) {
+    public constructor({ endpoint, httpInstance }: ApiProps) {
         this.endpoint = endpoint;
-        this.httpInstance = HttpInstanceFactory.getInstance(httpConfig);
+        this.httpInstance = httpInstance;
     }
 
     public async findOne(
@@ -41,7 +41,7 @@ export class Api<Types extends ApiTypes = ApiTypes> {
         return res.data;
     }
 
-    public async findMany(config?: AxiosRequestConfig): Promise<Types['many']> {
+    public async findAll(config?: AxiosRequestConfig): Promise<Types['many']> {
         const res = await this.httpInstance.get<Types['many']>(this.endpoint, config);
         return res.data;
     }
@@ -82,25 +82,62 @@ export class Api<Types extends ApiTypes = ApiTypes> {
 type ApiConfig<T extends typeof Api> = {
     instance: T;
     endpoint: string;
-    httpConfig?: HttpConfig;
 };
 
-type ApiConfigList = Record<string, ApiConfig<any>>;
+type ApisConfig = Record<string, ApiConfig<any>>;
 
-type ApiList<Config extends ApiConfigList> = {
+type ApiList<Config extends ApisConfig> = {
     [K in keyof Config]: InstanceType<Config[K]['instance']>;
 };
 
-export class ApiFactory<Config extends ApiConfigList> {
-    public apis: ApiList<Config> = {} as ApiList<Config>;
+type ApiFactoryProps<Config extends ApisConfig> = {
+    apisConfig: Config;
+    httpConfig: HttpConfig;
+};
 
-    constructor(config: Config, httpConfig: HttpConfig) {
-        Object.keys(config).forEach(key => {
-            const { endpoint, httpConfig: apiHttpConfig, instance } = config[key];
+export class ApiFactory<Config extends ApisConfig> {
+    public apis: ApiList<Config> = {} as ApiList<Config>;
+    private httpInstance: AxiosInstance;
+
+    constructor({ apisConfig, httpConfig }: ApiFactoryProps<Config>) {
+        this.httpInstance = HttpInstanceFactory.getInstance(httpConfig);
+
+        Object.keys(apisConfig).forEach(key => {
+            const { endpoint, instance } = apisConfig[key];
+
             this.apis[key as keyof Config] = new instance({
                 endpoint,
-                httpConfig: apiHttpConfig || httpConfig,
-            });
+                httpInstance: this.httpInstance,
+            } satisfies ApiProps);
         });
     }
 }
+
+type User = {
+    id: number;
+    name: string;
+    email: string;
+};
+
+const HTTP_CONFIG: HttpConfig = {
+    baseUrl: 'base_url',
+    tokenName: 'token_name',
+};
+
+class UsersExtendedApi extends Api<ApiBaseTypes<User>> {
+    getMe() {
+        return this.httpInstance.get(this.endpoint + '/me');
+    }
+}
+
+const { apis } = new ApiFactory({
+    httpConfig: HTTP_CONFIG,
+    apisConfig: {
+        usersExtendedApi: {
+            instance: UsersExtendedApi,
+            endpoint: 'users',
+        },
+    },
+});
+
+apis.usersExtendedApi.getMe();
