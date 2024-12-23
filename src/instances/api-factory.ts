@@ -78,3 +78,29 @@ export class Api<Types extends ApiTypes = ApiTypes> {
         return res.data;
     }
 }
+
+type ApiConfig<T extends typeof Api> = {
+    instance: T;
+    endpoint: string;
+    httpConfig?: HttpConfig;
+};
+
+type ApiConfigList = Record<string, ApiConfig<any>>;
+
+type ApiList<Config extends ApiConfigList> = {
+    [K in keyof Config]: InstanceType<Config[K]['instance']>;
+};
+
+export class ApiFactory<Config extends ApiConfigList> {
+    public apis: ApiList<Config> = {} as ApiList<Config>;
+
+    constructor(config: Config, httpConfig: HttpConfig) {
+        Object.keys(config).forEach(key => {
+            const { endpoint, httpConfig: apiHttpConfig, instance } = config[key];
+            this.apis[key as keyof Config] = new instance({
+                endpoint,
+                httpConfig: apiHttpConfig || httpConfig,
+            });
+        });
+    }
+}
