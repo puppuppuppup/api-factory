@@ -1,16 +1,14 @@
 {
   "name": "@puppup/api-factory",
   "version": "1.1.0-no-singleton",
-  "description": "axios-based singleton api factory",
+  "description": "axios-based api factory",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
-    "build": "tsc",
-    "test": "npx ts-node ./test.ts"
+    "build": "tsc"
   },
   "author": "puppuppuppup",
   "license": "MIT",
-  "homepage": "https://github.com/puppuppuppup/api-factory",
   "dependencies": {
     "axios": "^1.7.9",
     "js-cookie": "^3.0.5"
