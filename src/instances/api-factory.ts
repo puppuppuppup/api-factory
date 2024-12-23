@@ -1,3 +1,4 @@
+// TODO: добавить возможность создавать кастомный инстанс
 import { AxiosInstance, AxiosRequestConfig } from 'axios';
 import { HttpInstanceFactory, HttpConfig } from './http-instance.factory';
 
@@ -41,7 +42,7 @@ export class Api<Types extends ApiTypes = ApiTypes> {
         return res.data;
     }
 
-    public async findAll(config?: AxiosRequestConfig): Promise<Types['many']> {
+    public async findMany(config?: AxiosRequestConfig): Promise<Types['many']> {
         const res = await this.httpInstance.get<Types['many']>(this.endpoint, config);
         return res.data;
     }
@@ -80,14 +81,14 @@ export class Api<Types extends ApiTypes = ApiTypes> {
 }
 
 type ApiConfig<T extends typeof Api> = {
-    instance: T;
+    instanceClass: T;
     endpoint: string;
 };
 
 type ApisConfig = Record<string, ApiConfig<any>>;
 
 type ApiList<Config extends ApisConfig> = {
-    [K in keyof Config]: InstanceType<Config[K]['instance']>;
+    [K in keyof Config]: InstanceType<Config[K]['instanceClass']>;
 };
 
 type ApiFactoryProps<Config extends ApisConfig> = {
@@ -103,41 +104,12 @@ export class ApiFactory<Config extends ApisConfig> {
         this.httpInstance = HttpInstanceFactory.getInstance(httpConfig);
 
         Object.keys(apisConfig).forEach(key => {
-            const { endpoint, instance } = apisConfig[key];
+            const { endpoint, instanceClass } = apisConfig[key];
 
-            this.apis[key as keyof Config] = new instance({
+            this.apis[key as keyof Config] = new instanceClass({
                 endpoint,
                 httpInstance: this.httpInstance,
             } satisfies ApiProps);
         });
     }
 }
-
-type User = {
-    id: number;
-    name: string;
-    email: string;
-};
-
-const HTTP_CONFIG: HttpConfig = {
-    baseUrl: 'base_url',
-    tokenName: 'token_name',
-};
-
-class UsersExtendedApi extends Api<ApiBaseTypes<User>> {
-    getMe() {
-        return this.httpInstance.get(this.endpoint + '/me');
-    }
-}
-
-const { apis } = new ApiFactory({
-    httpConfig: HTTP_CONFIG,
-    apisConfig: {
-        usersExtendedApi: {
-            instance: UsersExtendedApi,
-            endpoint: 'users',
-        },
-    },
-});
-
-apis.usersExtendedApi.getMe();

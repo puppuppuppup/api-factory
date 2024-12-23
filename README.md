@@ -16,7 +16,7 @@
 
 ## Быстрый старт
 ```ts
-import { Api, ApiFactory, ApiBaseTypes, HttpConfig } from '@puppup/api-factory'
+import { Api, ApiFactory, ApiBaseTypes, HttpConfig } from '@md_team/api-factory'
 
 type MyType = {
     id: number;
@@ -34,7 +34,7 @@ const { apis } = new ApiFactory({
     httpConfig: HTTP_CONFIG,
     apisConfig: {
         myApi: {
-            instance: Api<ApiBaseTypes<MyType>>,
+            instanceClass: Api<ApiBaseTypes<MyType>>,
             endpoint: 'my-endpoint',
         },
     },
@@ -50,7 +50,7 @@ const { apis } = new ApiFactory({
 ### `apisConfig`
 
 В данное поле мы передаем объект с настройками нужных нам API. Ключи объекта будут использованы, как названия соответствующих API, В него входят:
-- `instance`: сущность, которая наследует класс `Api` и которая будет лежать в основе настройки методов и типов определенной API-сущности. Если отсутствует необходимость в типизации, можно передать `Api` без типов, но тогда для базовых методов будет применен `any`
+- `instanceClass`: сущность, которая наследует класс `Api` и которая будет лежать в основе настройки методов и типов определенной API-сущности. Если отсутствует необходимость в типизации, можно передать `Api` без типов, но тогда для базовых методов будет применен `any`
 - `endpoint`: эндпоинт, на который будет настроен API относительно `baseUrl` из `httpConfig` вашей `ApiFactory`
 
 ## Создание api
@@ -59,7 +59,7 @@ const { apis } = new ApiFactory({
     httpConfig: HTTP_CONFIG,
     apisConfig: {
         myApi: {
-            instance: Api,
+            instanceClass: Api,
             endpoint: 'endpoint',
         },
     },
@@ -77,7 +77,7 @@ const { apis } = new ApiFactory({
 Также все методы поддерживают передачу последним параметром `AxiosRequestConfig`
 
 ## Типизация
-Базовое использование `Api` в поле `instance` вернет нам сущность с методами, работающими с `any`, но мы можем протипизировать её.
+Базовое использование `Api` в поле `instanceClass` вернет нам сущность с методами, работающими с `any`, но мы можем протипизировать её.
 
 Типизация разделена на:
 - `single`
@@ -94,7 +94,7 @@ const { apis } = new ApiFactory({
 
 ### Шаблонная типизация
 ```ts
-import { ApiBaseTypes, ApiFactory, ... } from "@puppup/api-factory";
+import { ApiBaseTypes, ApiFactory, ... } from "@md_team/api-factory";
 
 ...
 
@@ -111,7 +111,7 @@ const { apis } = new ApiFactory({
     httpConfig: HTTP_CONFIG,
     apisConfig: {
         usersApi: {
-            instance: Api<ApiTypes>,
+            instanceClass: Api<ApiTypes>,
             endpoint: 'users',
         },
     },
@@ -129,7 +129,7 @@ export type ApiBaseTypes<BaseType> = ApiCustomTypes<{
 ### Кастомная типизация
 Если необходимо переписать типы под определенные задачи, можно воспользоваться утилитой `ApiCustomTypes`, передав в неё необходимые типы
 ```ts
-import { ApiCustomTypes, ApiFactory, ... } from "@puppup/api-factory";
+import { ApiCustomTypes, ApiFactory, ... } from "@md_team/api-factory";
 
 ...
 
@@ -151,7 +151,7 @@ const { apis } = new ApiFactory({
     httpConfig: HTTP_CONFIG,
     apisConfig: {
         usersApi: {
-            instance: Api<ApiTypes>,
+            instanceClass: Api<ApiTypes>,
             endpoint: 'users',
         },
     },
@@ -159,7 +159,7 @@ const { apis } = new ApiFactory({
 ```
 Также мы можем воспользоваться `ApiCustomTypes` на базе существующего типа для API, доработав его
 ```ts
-import { ApiBaseTypes, ApiCustomTypes, ApiFactory, ... } from "@puppup/api-factory";
+import { ApiBaseTypes, ApiCustomTypes, ApiFactory, ... } from "@md_team/api-factory";
 
 ...
 
@@ -181,11 +181,11 @@ const { apis } = new ApiFactory({
     httpConfig: HTTP_CONFIG,
     apisConfig: {
         usersApi: {
-            instance: Api<ApiTypes>,
+            instanceClass: Api<ApiTypes>,
             endpoint: 'users',
         },
         usersModifiedApi: {
-            instance: Api<ApiModifiedTypes>,
+            instanceClass: Api<ApiModifiedTypes>,
             endpoint: 'users',
         },
     },
@@ -194,7 +194,7 @@ const { apis } = new ApiFactory({
 ## Расширение api
 Если нам необходимо добавить свои методы, не входящие в стандартный набор, мы можем расширить существующий api
 ```ts
-import { Api, ApiBaseTypes, ApiFactory, ... } from "@puppup/api-factory";
+import { Api, ApiBaseTypes, ApiFactory, ... } from "@md_team/api-factory";
 
 ...
 
@@ -214,7 +214,7 @@ const { apis } = new ApiFactory({
     httpConfig: HTTP_CONFIG,
     apisConfig: {
         usersExtendedApi: {
-            instance: UsersExtendedApi,
+            instanceClass: UsersExtendedApi,
             endpoint: 'users',
         },
     },
