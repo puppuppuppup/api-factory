@@ -194,8 +194,9 @@ const { apis } = new ApiFactory({
 ## Расширение api
 Если нам необходимо добавить свои методы, не входящие в стандартный набор, мы можем расширить существующий api
 ```ts
-import { AxiosResponse } from "axios";
-import { ApiBaseTypes, ApiFactory } from "@puppup/api-factory";
+import { Api, ApiBaseTypes, ApiFactory, ... } from "@puppup/api-factory";
+
+...
 
 type User = {
     id: number;
